@@ -33,33 +33,31 @@ void Statistics::AddAtt(char *relName, char *attName, int numDistincts)
 {
   string const rel(relName);
   string const att(attName);
-  if (-1 == numDistincts)
+  if (numDistincts == -1)
     {
-      // relationInformation[rel] = make_pair(att, relations[rel]);
       rels[rel].AddAtt(att,rels[rel].NumTuples());
-      extantAttrs.insert(make_pair(att,rel));
+      relationAttrsMap.insert(make_pair(att,rel));
     }
   else
     {
       rels[rel].AddAtt(att,numDistincts);
-      extantAttrs.insert(make_pair(att,rel));
+      relationAttrsMap.insert(make_pair(att,rel));
     }
 }
 void Statistics::CopyRel(char *oldName, char *newName)
 {
   string oldN(oldName);
   string newN(newName);
-  map < std::string, unsigned long > const oldAttrs = rels[oldN].GetAtts();
+  map < string, unsigned long > const oldAttrs = rels[oldN].GetAtts();
 
   Relation newR(rels[oldN].NumTuples(), oldN);
 
-  map < std::string, unsigned long >::const_iterator it;
+  map < string, unsigned long >::const_iterator it;
   for (it = oldAttrs.begin(); it != oldAttrs.end(); it++ )
     {
       string newAttrName(newN+"."+(*it).first); // might need to do this for the schma variables as well.
-      //clog << "aliasing " << newAttrName << newAttrName.size() << " to " << newN << endl;
       newR.AddAtt(newAttrName, (*it).second); // add modified attr to new relation
-      extantAttrs[newAttrName] = newN; // know where these modified attrs are
+      relationAttrsMap[newAttrName] = newN; // know where these modified attrs are
     }
 
   rels[newN] = newR; // put new relation in
@@ -92,7 +90,7 @@ void Statistics::Read(char *fromWhere)
       string attr;
       string relation;
       statFile >> attr >> relation;
-      extantAttrs[attr] = relation;
+      relationAttrsMap[attr] = relation;
     }
   statFile >> iters;
   for(unsigned i = 0; i < iters; i++)
@@ -109,23 +107,23 @@ void Statistics::Write(char *fromWhere)
 
   statFile << rels.size() << endl;
   {
-    map < std::string, Relation >::iterator it;
+    map < string, Relation >::iterator it;
     for (it = rels.begin(); it != rels.end(); it++ )
       {
         statFile << (*it).first << endl << (*it).second << endl;
       }
   }
-  statFile << extantAttrs.size() << endl;
+  statFile << relationAttrsMap.size() << endl;
   {
-    map < std::string, std::string>::iterator it;
-    for (it = extantAttrs.begin(); it != extantAttrs.end(); it++ )
+    map < string, string>::iterator it;
+    for (it = relationAttrsMap.begin(); it != relationAttrsMap.end(); it++ )
       {
         statFile << (*it).first << endl << (*it).second << endl;
       }
   }
   statFile << mergedRelations.size() << endl;
   {
-    map < std::string, std::string>::const_iterator it;
+    map < string, string>::const_iterator it;
     for (it = mergedRelations.begin(); it != mergedRelations.end(); it++ )
       {
         statFile << (*it).first << endl << (*it).second << endl;
@@ -138,7 +136,7 @@ void Statistics::Write(char *fromWhere)
 void  Statistics::Apply(struct AndList *parseTree, char *relNames[], int numToJoin)
 {
   CheckRelations(relNames, numToJoin);
-  vector <std::string> attrs = CheckParseTree(parseTree);
+  vector <string> attrs = CheckParseTree(parseTree);
   double estimate = 0;
   if (0 == parseTree and 2 >= numToJoin)
     {
@@ -174,12 +172,12 @@ void  Statistics::Apply(struct AndList *parseTree, char *relNames[], int numToJo
       rels[newRelation] = merged;
 
       { // get rid of information about old relations
-      vector<std::string> attrsInParseTree  = CheckParseTree(parseTree);
+      vector<string> attrsInParseTree  = CheckParseTree(parseTree);
       // create a set of old relations to steal attributes from.
       set<string> oldRels;
       for(vector<string>::iterator it = attrsInParseTree.begin(); it < attrsInParseTree.end(); ++it)
         {
-          oldRels.insert(extantAttrs[(*it)]);
+          oldRels.insert(relationAttrsMap[(*it)]);
         }
 
       for(set<string>::const_iterator it = oldRels.begin(); it != oldRels.end(); ++it)
@@ -194,12 +192,12 @@ void  Statistics::Apply(struct AndList *parseTree, char *relNames[], int numToJo
         }
       }
 
-      map<std::string, unsigned long> mergedAtts = merged.GetAtts();
+      map<string, unsigned long> mergedAtts = merged.GetAtts();
 
-      map < std::string, unsigned long>::const_iterator it;
+      map < string, unsigned long>::const_iterator it;
       for (it = mergedAtts.begin(); it != mergedAtts.end(); it++ )
         {
-          extantAttrs[(*it).first] = newRelation;
+          relationAttrsMap[(*it).first] = newRelation;
           //clog << (*it).first << "now belongs to " << newRelation << endl;
         }
     }
@@ -220,7 +218,7 @@ double Statistics::Estimate(struct AndList *parseTree, char **relNames, int numT
     }
 
   CheckRelations(relNames, numToJoin);
-  vector <std::string> attrs = CheckParseTree(parseTree);
+  vector <string> attrs = CheckParseTree(parseTree);
   
    double result = CalculateEstimate(parseTree);
   return result;
@@ -246,9 +244,9 @@ void Statistics :: CheckRelations(char *relNames[], int numToJoin)
     }
 }
 
-vector<std::string> Statistics :: CheckParseTree(struct AndList *pAnd)
+vector<string> Statistics :: CheckParseTree(struct AndList *pAnd)
 {
-  vector < std::string > attrs;
+  vector < string > attrs;
   attrs.reserve(100);
   while (pAnd)
     {
@@ -264,10 +262,10 @@ vector<std::string> Statistics :: CheckParseTree(struct AndList *pAnd)
                   {
                     // check left operand
                     string attr(pOperand->value);
-                    if (0 == extantAttrs.count(attr))
+                    if (0 == relationAttrsMap.count(attr))
                       {
-                        cerr << "left operand attribute \"" << attr << "\" not found" << std::endl;
-                        assert(0 != extantAttrs.count(attr));
+                        cerr << "left operand attribute \"" << attr << "\" not found" << endl;
+                        assert(0 != relationAttrsMap.count(attr));
                         exit(-1);
                       }
                     attrs.push_back(attr);
@@ -279,10 +277,10 @@ vector<std::string> Statistics :: CheckParseTree(struct AndList *pAnd)
                   {
                     // check right operand
                     string attr(pOperand->value);
-                    if (0 == extantAttrs.count(attr))
+                    if (0 == relationAttrsMap.count(attr))
                       {
-                        cerr << "right operand attribute \"" << attr << "\" not found" << std::endl;
-                        assert(0 != extantAttrs.count(attr));
+                        cerr << "right operand attribute \"" << attr << "\" not found" << endl;
+                        assert(0 != relationAttrsMap.count(attr));
                         exit(-1);
                       }
                     attrs.push_back(attr);
@@ -326,21 +324,11 @@ double Statistics :: CalculateEstimate(AndList *pAnd)
           }
         if (ors.size() != count)
           {independentORs = false;}
-        if (1 == count)
+        if (count == 1)
           {independentORs = false; 
-	//clog << "singleOr is " << singleOR << endl; 
 	singleOR = true; 
-	//clog << "singleOr is " << singleOR << endl; 
-	//clog << "THERE IS A SINGLE OR" << endl; 
-	//clog << "singleOr is " << singleOR << endl;
 	}
-        //clog << " ors are ";
-        /*if(independentORs)
-          clog << "independent" << endl;
-        else
-          clog << "dependent" << endl;*/
       }
-      //clog << "singleOr is " << singleOR << endl;
       pOr = pAnd->left; // reset pointer
       double tempOrValue = 0.0l; // each or is calculated separately, and then multiplied in at the end.
       if(independentORs)
@@ -350,11 +338,6 @@ double Statistics :: CalculateEstimate(AndList *pAnd)
           struct ComparisonOp *pCom = pOr->left;
           if (pCom!=NULL)
             {
-              // pcom has left and right, as well as the operand that
-              // details what it is an equality signals either a join
-              // or a selection, geq (>=) or leq (<=) are both
-              // selections (or really dumb joins that I am not going
-              // to cover)
               Operand *lOperand = pCom->left;
               Operand *rOperand = pCom->right;
               switch(pCom->code)
@@ -369,36 +352,25 @@ double Statistics :: CalculateEstimate(AndList *pAnd)
                         string const lattr(lOperand->value);
                         string const rattr(rOperand->value);
                         // look up which relation l attr is in
-                        string const lrel = extantAttrs[lattr];
+                        string const lrel = relationAttrsMap[lattr];
                         // get size of l relation
                         unsigned long const lRelSize = rels[lrel].NumTuples();
                         // get number of Distinct values of L attr
                         int const lDistinct = rels[lrel].GetDistinct(lattr);
                         // look up which relation r attr is in
-                        string const rrel = extantAttrs[rattr];
+                        string const rrel = relationAttrsMap[rattr];
                         // get size of r relation
                         unsigned long const rRelSize = rels[rrel].NumTuples();
                         // get number of Distinct values of R attr
                         int const rDistinct = rels[rrel].GetDistinct(rattr);
 
-                        //clog << "lr = " << lRelSize << " rr = " << rRelSize << endl;
-                        //clog << "product is " << ((double)lRelSize * (double)rRelSize) << endl;
-
                         double numerator   = lRelSize * rRelSize;
                         double denominator = max(lDistinct,rDistinct);
 
-                        //clog << "lattr of " << lattr << " with " << lDistinct <<" distinct values is "
-                             //<< "found in rel " << lrel << " of size " << lRelSize << endl;
-                        //clog << "rattr of " << rattr << " with " << rDistinct <<" distinct values is "
-                             //<< "Found in rel " << rrel << " of size " << rRelSize << endl;
                         tempOrValue += (numerator/denominator);
-                        //clog << "numerator is " << numerator
-                             //<< " denominator is " << denominator
-                             //<< " with final result of " << tempOrValue << endl << endl;
                       }
                     else
                       { // this is a selection // maybe fall through?
-                        //clog << endl <<  "*** EQUALITY SELECTION" << endl;
                         Operand *opnd = 0;
                         Operand *constant = 0;
                         if (NAME == lOperand->code)
@@ -409,7 +381,7 @@ double Statistics :: CalculateEstimate(AndList *pAnd)
                         assert(0 != constant); // something was assigned
 
                         string const attr(opnd->value);
-                        string const relation = extantAttrs[attr];
+                        string const relation = relationAttrsMap[attr];
                         unsigned long const distinct = rels[relation].GetDistinct(attr);
                         //clog << "singleOr is " << singleOR << endl;
                         if (singleOR)
@@ -444,10 +416,7 @@ double Statistics :: CalculateEstimate(AndList *pAnd)
                 case LESS_THAN: // selection
                   //break;
                 case GREATER_THAN: // selection
-                  // break;
-                  //clog << "not equal selection fall through" << endl;
-                  // we are in a selection now.
-                  // so either of our operands could be a literal value rather than an attribute
+                  
                   Operand *opnd = 0;
                   Operand *constant = 0;
                   if (NAME == lOperand->code)
@@ -458,7 +427,7 @@ double Statistics :: CalculateEstimate(AndList *pAnd)
                   assert(0 != constant); // something was assigned
 
                   string const attr(opnd->value);
-                  string const relation = extantAttrs[attr];
+                  string const relation = relationAttrsMap[attr];
 
                   if(independentORs) // independent ORs
                     {
@@ -482,7 +451,7 @@ double Statistics :: CalculateEstimate(AndList *pAnd)
                   else if (NAME == rOperand->code)
                     {opnd = rOperand;}
                   string const attr(opnd->value);
-                  string const relation = extantAttrs[attr];
+                  string const relation = relationAttrsMap[attr];
                   unsigned long const relationSize = rels[relation].NumTuples();
                   selectOnlySize = relationSize;
                 }
@@ -492,10 +461,10 @@ double Statistics :: CalculateEstimate(AndList *pAnd)
                   {
                     // check left operand
                     string attr(pOperand->value);
-                    if (0 == extantAttrs.count(attr))
+                    if (0 == relationAttrsMap.count(attr))
                       {
-                        cerr << "estimate left operand attribute \"" << attr << "\" not found" << std::endl;
-                        assert(0 != extantAttrs.count(attr));
+                        cerr << "estimate left operand attribute \"" << attr << "\" not found" << endl;
+                        assert(0 != relationAttrsMap.count(attr));
                         exit(-1);
                       }
                   }
@@ -507,10 +476,10 @@ double Statistics :: CalculateEstimate(AndList *pAnd)
                   {
                     // check right operand
                     string attr(pOperand->value);
-                    if (0 == extantAttrs.count(attr))
+                    if (0 == relationAttrsMap.count(attr))
                       {
-                        cerr << "estimate right operand attribute \"" << attr << "\" not found" << std::endl;
-                        assert(0 != extantAttrs.count(attr));
+                        cerr << "estimate right operand attribute \"" << attr << "\" not found" << endl;
+                        assert(0 != relationAttrsMap.count(attr));
                         exit(-1);
                       }
                   }
@@ -521,17 +490,11 @@ double Statistics :: CalculateEstimate(AndList *pAnd)
       //clog << "putting ors into and estimate" << endl;
       if (independentORs)
         {
-          //clog << "independent ors" << endl;
-          //clog << "before, result was " << result << endl;
           result *= (1 - tempOrValue);
-          //clog << "after, result was " << result << endl;
         }
       else
         {
-          //clog << "dependent ors" << endl;
-          //clog << "before, result was " << result << endl;
           result *= tempOrValue;
-          //clog << "after, result was " << result << endl;
         }
       pAnd = pAnd->rightAnd; // go to next and
     }
@@ -576,17 +539,8 @@ bool Statistics :: HasJoin(AndList *pAnd)
           {independentORs = false; 
 	//clog << "singleOr is " << singleOR << endl; 
 	singleOR = true; 
-	//clog << "singleOr is " << singleOR << endl; 
-	//clog << "THERE IS A SINGLE OR" << endl; 
-	//clog << "singleOr is " << singleOR << endl;
 	}
-        //clog << " ors are ";
-        /*if(independentORs)
-          clog << "independent" << endl;
-        else
-          clog << "dependent" << endl;*/
       }
-      //clog << "singleOr is " << singleOR << endl;
       pOr = pAnd->left; // reset pointer
       double tempOrValue = 0.0l; // each or is calculated separately, and then multiplied in at the end.
       if(independentORs)
@@ -596,11 +550,6 @@ bool Statistics :: HasJoin(AndList *pAnd)
           struct ComparisonOp *pCom = pOr->left;
           if (pCom!=NULL)
             {
-              // pcom has left and right, as well as the operand that
-              // details what it is an equality signals either a join
-              // or a selection, geq (>=) or leq (<=) are both
-              // selections (or really dumb joins that I am not going
-              // to cover)
               Operand *lOperand = pCom->left;
               Operand *rOperand = pCom->right;
               switch(pCom->code)
@@ -610,37 +559,21 @@ bool Statistics :: HasJoin(AndList *pAnd)
                     if ((0 != lOperand and (NAME == lOperand->code)) and
                         (0 != rOperand and (NAME == rOperand->code)))
                       {// this is a join, because both the left and right are attribute names
-                        //clog << endl << "join case estimation" << endl << endl;
                         seenJoin = true;
                         string const lattr(lOperand->value);
                         string const rattr(rOperand->value);
-                        // look up which relation l attr is in
-                        string const lrel = extantAttrs[lattr];
-                        // get size of l relation
+                        string const lrel = relationAttrsMap[lattr];
                         unsigned long const lRelSize = rels[lrel].NumTuples();
-                        // get number of Distinct values of L attr
                         int const lDistinct = rels[lrel].GetDistinct(lattr);
-                        // look up which relation r attr is in
-                        string const rrel = extantAttrs[rattr];
-                        // get size of r relation
+                        string const rrel = relationAttrsMap[rattr];
                         unsigned long const rRelSize = rels[rrel].NumTuples();
-                        // get number of Distinct values of R attr
                         int const rDistinct = rels[rrel].GetDistinct(rattr);
 
-                        //clog << "lr = " << lRelSize << " rr = " << rRelSize << endl;
-                        //clog << "product is " << ((double)lRelSize * (double)rRelSize) << endl;
 
                         double numerator   = lRelSize * rRelSize;
                         double denominator = max(lDistinct,rDistinct);
 
-                        //clog << "lattr of " << lattr << " with " << lDistinct <<" distinct values is "
-                             //<< "found in rel " << lrel << " of size " << lRelSize << endl;
-                        //clog << "rattr of " << rattr << " with " << rDistinct <<" distinct values is "
-                             //<< "Found in rel " << rrel << " of size " << rRelSize << endl;
                         tempOrValue += (numerator/denominator);
-                        //clog << "numerator is " << numerator
-                             //<< " denominator is " << denominator
-                             //<< " with final result of " << tempOrValue << endl << endl;
                       }
                     else
                       { // this is a selection // maybe fall through?
@@ -655,7 +588,7 @@ bool Statistics :: HasJoin(AndList *pAnd)
                         assert(0 != constant); // something was assigned
 
                         string const attr(opnd->value);
-                        string const relation = extantAttrs[attr];
+                        string const relation = relationAttrsMap[attr];
                         unsigned long const distinct = rels[relation].GetDistinct(attr);
                         //clog << "singleOr is " << singleOR << endl;
                         if (singleOR)
@@ -690,10 +623,6 @@ bool Statistics :: HasJoin(AndList *pAnd)
                 case LESS_THAN: // selection
                   //break;
                 case GREATER_THAN: // selection
-                  // break;
-                  //clog << "not equal selection fall through" << endl;
-                  // we are in a selection now.
-                  // so either of our operands could be a literal value rather than an attribute
                   Operand *opnd = 0;
                   Operand *constant = 0;
                   if (NAME == lOperand->code)
@@ -704,7 +633,7 @@ bool Statistics :: HasJoin(AndList *pAnd)
                   assert(0 != constant); // something was assigned
 
                   string const attr(opnd->value);
-                  string const relation = extantAttrs[attr];
+                  string const relation = relationAttrsMap[attr];
 
                   if(independentORs) // independent ORs
                     {
@@ -728,7 +657,7 @@ bool Statistics :: HasJoin(AndList *pAnd)
                   else if (NAME == rOperand->code)
                     {opnd = rOperand;}
                   string const attr(opnd->value);
-                  string const relation = extantAttrs[attr];
+                  string const relation = relationAttrsMap[attr];
                   unsigned long const relationSize = rels[relation].NumTuples();
                   selectOnlySize = relationSize;
                 }
@@ -738,25 +667,24 @@ bool Statistics :: HasJoin(AndList *pAnd)
                   {
                     // check left operand
                     string attr(pOperand->value);
-                    if (0 == extantAttrs.count(attr))
+                    if (0 == relationAttrsMap.count(attr))
                       {
-                        cerr << "operand attribute \"" << attr << "\" not found" << std::endl;
-                        assert(0 != extantAttrs.count(attr));
+                        cerr << "operand attribute \"" << attr << "\" not found" << endl;
+                        assert(0 != relationAttrsMap.count(attr));
                         exit(-1);
                       }
                   }
               }
-              // operator
               {
                 struct Operand *pOperand = pCom->right;
                 if(pOperand!=NULL and (NAME == pOperand->code))
                   {
                     // check right operand
                     string attr(pOperand->value);
-                    if (0 == extantAttrs.count(attr))
+                    if (0 == relationAttrsMap.count(attr))
                       {
-                        cerr << "operand attribute \"" << attr << "\" not found" << std::endl;
-                        assert(0 != extantAttrs.count(attr));
+                        cerr << "operand attribute \"" << attr << "\" not found" << endl;
+                        assert(relationAttrsMap.count(attr)!=0);
                         exit(-1);
                       }
                   }
@@ -764,20 +692,13 @@ bool Statistics :: HasJoin(AndList *pAnd)
             }
           pOr = pOr->rightOr; // go to next or
         }
-      //clog << "putting ors into and estimate" << endl;
       if (independentORs)
         {
-          //clog << "independent ors" << endl;
-          //clog << "before, result was " << result << endl;
           result *= (1 - tempOrValue);
-          //clog << "after, result was " << result << endl;
         }
       else
         {
-          //clog << "dependent ors" << endl;
-          //clog << "before, result was " << result << endl;
           result *= tempOrValue;
-          //clog << "after, result was " << result << endl;
         }
       pAnd = pAnd->rightAnd; // go to next and
     }

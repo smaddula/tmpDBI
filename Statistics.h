@@ -13,7 +13,7 @@ using namespace std;
 class Relation
 {
 	unsigned long numberOfTuples;
-	map<std::string, unsigned long> attributeInformation;
+	map<string, unsigned long> attributeInformation;
 	string originalName;
  
 	public:
@@ -28,7 +28,7 @@ class Relation
 			originalName = origNme;
 		}
 
-  		map<std::string, unsigned long> const GetAtts()
+  		map<string, unsigned long> const GetAtts()
     		{
       			return attributeInformation;
     		}
@@ -54,9 +54,9 @@ class Relation
 		}
   		
 
-  		friend ostream& operator<<(std::ostream& os, const Relation & RI)
+  		friend ostream& operator<<(ostream& os, const Relation & RI)
     		{
-      			map<std::string, unsigned long>::const_iterator it;
+      			map<string, unsigned long>::const_iterator it;
       			//os << RI.attributeInformation.size() << endl;
       			for (it = RI.attributeInformation.begin(); it != RI.attributeInformation.end(); it++ )
         		{
@@ -65,7 +65,7 @@ class Relation
       			return os;
     		}
 
-  		friend istream& operator>>(std::istream& is, Relation & RI)
+  		friend istream& operator>>(istream& is, Relation & RI)
     		{
       			unsigned long numTups;
       			is >> numTups;
@@ -88,12 +88,12 @@ class Statistics
 {
 	private:
 
-  		map < std::string, Relation > rels;
-  		map < std::string, std::string> extantAttrs; 
-  		map < std::string, std::string> mergedRelations;
+  		map < string, Relation > rels;
+  		map < string, string> relationAttrsMap; 
+  		map < string, string> mergedRelations;
   		void Check (struct AndList *parseTree, char *relNames[], int numToJoin);
   		void CheckRelations(char *relNames[], int numToJoin);
-  		vector<std::string> CheckParseTree(struct AndList *pAnd);
+  		vector<string> CheckParseTree(struct AndList *pAnd);
   		double CalculateEstimate(struct AndList *pAnd);
   		bool HasJoin(AndList *pAnd);
  	public:
@@ -112,11 +112,11 @@ class Statistics
   		void  Apply(struct AndList *parseTree, char *relNames[], int numToJoin);
   		double Estimate(struct AndList *parseTree, char **relNames, int numToJoin);
 
-  		string getAttrHomeTable(std::string a)
+  		string getAttrHomeTable(string a)
     		{
-      			if (1 == extantAttrs.count(a))
+      			if (1 == relationAttrsMap.count(a))
       	  		{
-          			string tbl(extantAttrs[a]);
+          			string tbl(relationAttrsMap[a]);
           			return tbl;
         		}
       			return "";
