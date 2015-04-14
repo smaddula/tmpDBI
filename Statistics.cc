@@ -23,15 +23,15 @@ Statistics::~Statistics()
 void Statistics::AddRel(char *relName, int numTuples)
 {
   string s(relName);
-  const Relation newrel (numTuples, s);
+  Relation newrel (numTuples, s);
   rels[s] = newrel;
   rels.insert( make_pair(s,newrel));
 
 }
 void Statistics::AddAtt(char *relName, char *attName, int numDistincts)
 {
-  string const rel(relName);
-  string const att(attName);
+  string rel(relName);
+  string att(attName);
   if (numDistincts == -1)
     {
       rels[rel].AddAtt(att,rels[rel].NumTuples());
@@ -47,7 +47,7 @@ void Statistics::CopyRel(char *oldName, char *newName)
 {
   string oldN(oldName);
   string newN(newName);
-  map < string, unsigned long > const oldAttrs = rels[oldN].GetAtts();
+  map < string, unsigned long >  oldAttrs = rels[oldN].GetAtts();
 
   Relation newR(rels[oldN].NumTuples(), oldN);
 
@@ -330,14 +330,14 @@ double Statistics :: CalculateEstimate(AndList *pAnd)
                         (0 != rOperand and (NAME == rOperand->code)))
                       {// this is a join, because both the left and right are attribute names
                         seenJoin = true;
-                        string const lattr(lOperand->value);
-                        string const rattr(rOperand->value);
-                        string const lrel = relationAttrsMap[lattr];
+                        string lattr(lOperand->value);
+                        string rattr(rOperand->value);
+                        string lrel = relationAttrsMap[lattr];
                         unsigned long const lRelSize = rels[lrel].NumTuples();
-                        int const lDistinct = rels[lrel].GetDistinct(lattr);
-                        string const rrel = relationAttrsMap[rattr];
+                        int lDistinct = rels[lrel].GetDistinct(lattr);
+                        string rrel = relationAttrsMap[rattr];
                         unsigned long const rRelSize = rels[rrel].NumTuples();
-                        int const rDistinct = rels[rrel].GetDistinct(rattr);
+                        int rDistinct = rels[rrel].GetDistinct(rattr);
 
                         double numerator   = lRelSize * rRelSize;
                         double denominator = max(lDistinct,rDistinct);
@@ -353,25 +353,25 @@ double Statistics :: CalculateEstimate(AndList *pAnd)
                         else if (NAME == rOperand->code)
                           {opnd = rOperand; constant = lOperand;}
 
-                        string const attr(opnd->value);
-                        string const relation = relationAttrsMap[attr];
-                        unsigned long const distinct = rels[relation].GetDistinct(attr);
+                        string attr(opnd->value);
+                        string relation = relationAttrsMap[attr];
+                        unsigned long distinct = rels[relation].GetDistinct(attr);
                         if (singleOR)
                           {
-                            double const calculation = (1.0l/distinct);// (numerator/denominator);
+                            double calculation = (1.0l/distinct);// (numerator/denominator);
                             tempOrValue += calculation;
                           }
                         else
                           {
                             if(independentORs) // independent ORs
                               {
-                                double const calculation = (1.0l - (1.0l/distinct));
+                                double calculation = (1.0l - (1.0l/distinct));
                                 tempOrValue *= calculation;
                               }
                             else // dependent ORs
                               {
                                 {
-                                  double const calculation = (1.0l/distinct);
+                                  double calculation = (1.0l/distinct);
                                   tempOrValue += calculation;
                                 }
                               }
@@ -389,17 +389,17 @@ double Statistics :: CalculateEstimate(AndList *pAnd)
                   else if (NAME == rOperand->code)
                     {opnd = rOperand; constant = lOperand;}
 
-                  string const attr(opnd->value);
-                  string const relation = relationAttrsMap[attr];
+                  string attr(opnd->value);
+                  string relation = relationAttrsMap[attr];
 
                   if(independentORs) // independent ORs
                     {
-                      double const calculation = 1.0l - (1.0l)/(3.0l);;
+                      double calculation = 1.0l - (1.0l)/(3.0l);;
                       tempOrValue *= calculation;
                     }
                   else // dependent ORs
                     {
-                      double const calculation = (1.0l)/(3.0l);
+                      double calculation = (1.0l)/(3.0l);
                       tempOrValue += calculation;
                     }
                   break;
@@ -411,9 +411,9 @@ double Statistics :: CalculateEstimate(AndList *pAnd)
                     {opnd = lOperand;}
                   else if (NAME == rOperand->code)
                     {opnd = rOperand;}
-                  string const attr(opnd->value);
-                  string const relation = relationAttrsMap[attr];
-                  unsigned long const relationSize = rels[relation].NumTuples();
+                  string  attr(opnd->value);
+                  string relation = relationAttrsMap[attr];
+                  unsigned long relationSize = rels[relation].NumTuples();
                   selectOnlySize = relationSize;
                 }
               {
@@ -508,14 +508,14 @@ bool Statistics :: HasJoin(AndList *pAnd)
                         (0 != rOperand and (NAME == rOperand->code)))
                       {// this is a join, because both the left and right are attribute names
                         seenJoin = true;
-                        string const lattr(lOperand->value);
-                        string const rattr(rOperand->value);
-                        string const lrel = relationAttrsMap[lattr];
+                        string lattr(lOperand->value);
+                        string rattr(rOperand->value);
+                        string lrel = relationAttrsMap[lattr];
                         unsigned long const lRelSize = rels[lrel].NumTuples();
-                        int const lDistinct = rels[lrel].GetDistinct(lattr);
-                        string const rrel = relationAttrsMap[rattr];
-                        unsigned long const rRelSize = rels[rrel].NumTuples();
-                        int const rDistinct = rels[rrel].GetDistinct(rattr);
+                        int lDistinct = rels[lrel].GetDistinct(lattr);
+                        string rrel = relationAttrsMap[rattr];
+                        unsigned long rRelSize = rels[rrel].NumTuples();
+                        int rDistinct = rels[rrel].GetDistinct(rattr);
 
 
                         double numerator   = lRelSize * rRelSize;
@@ -532,12 +532,12 @@ bool Statistics :: HasJoin(AndList *pAnd)
                         else if (NAME == rOperand->code)
                           {opnd = rOperand; constant = lOperand;}
 
-                        string const attr(opnd->value);
-                        string const relation = relationAttrsMap[attr];
-                        unsigned long const distinct = rels[relation].GetDistinct(attr);
+                        string attr(opnd->value);
+                        string relation = relationAttrsMap[attr];
+                        unsigned long distinct = rels[relation].GetDistinct(attr);
                         if (singleOR)
                           {
-                            double const calculation = (1.0l/distinct);// (numerator/denominator);
+                            double calculation = (1.0l/distinct);// (numerator/denominator);
 
                             tempOrValue += calculation;
                           }
@@ -545,14 +545,14 @@ bool Statistics :: HasJoin(AndList *pAnd)
                           {
                             if(independentORs) // independent ORs
                               {
-                                double const calculation = (1.0l - (1.0l/distinct));
+                                double calculation = (1.0l - (1.0l/distinct));
                                 tempOrValue *= calculation;
                               }
                             else // dependent ORs
                               {
                                 // else
                                 {
-                                  double const calculation = (1.0l/distinct);
+                                  double calculation = (1.0l/distinct);
                                   tempOrValue += calculation;
                                 }
                               }
@@ -569,17 +569,17 @@ bool Statistics :: HasJoin(AndList *pAnd)
                   else if (NAME == rOperand->code)
                     {opnd = rOperand; constant = lOperand;}
 
-                  string const attr(opnd->value);
-                  string const relation = relationAttrsMap[attr];
+                  string attr(opnd->value);
+                  string relation = relationAttrsMap[attr];
 
                   if(independentORs) // independent ORs
                     {
-                      double const calculation = 1.0l - (1.0l)/(3.0l);;
+                      double calculation = 1.0l - (1.0l)/(3.0l);;
                       tempOrValue *= calculation;
                     }
                   else // dependent ORs
                     {
-                      double const calculation = (1.0l)/(3.0l);
+                      double calculation = (1.0l)/(3.0l);
                       tempOrValue += calculation;
                     }
                   break;
@@ -591,9 +591,9 @@ bool Statistics :: HasJoin(AndList *pAnd)
                     {opnd = lOperand;}
                   else if (NAME == rOperand->code)
                     {opnd = rOperand;}
-                  string const attr(opnd->value);
-                  string const relation = relationAttrsMap[attr];
-                  unsigned long const relationSize = rels[relation].NumTuples();
+                  string attr(opnd->value);
+                  string relation = relationAttrsMap[attr];
+                  unsigned long relationSize = rels[relation].NumTuples();
                   selectOnlySize = relationSize;
                 }
               {

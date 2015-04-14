@@ -10,53 +10,53 @@
 using namespace std;
 class Relation
 {
-	unsigned long numberOfTuples;
-	map<string, unsigned long> attributeInformation;
+	unsigned long numtuples;
+	map<string, unsigned long> attdistinctCount;
 	string originalName;
  
 	public:
 
 		Relation ()  {
-			numberOfTuples = 0;
+			numtuples = 0;
 		}
 
   		explicit Relation (unsigned long tuples, string origNme)
   		{
-			numberOfTuples = tuples;
+			numtuples = tuples;
 			originalName = origNme;
 		}
 
   		map<string, unsigned long> const GetAtts()
     		{
-      			return attributeInformation;
+      			return attdistinctCount;
     		}
   		
 		void CopyAtts (Relation const & otherRel)
 		{
-    			attributeInformation.insert(otherRel.attributeInformation.begin(), otherRel.attributeInformation.end());
+    			attdistinctCount.insert(otherRel.attdistinctCount.begin(), otherRel.attdistinctCount.end());
   		}
   		
 		unsigned long GetDistinct (string attr)
   		{
-    			return attributeInformation[attr];
+    			return attdistinctCount[attr];
   		}
   
 		void AddAtt (string attr, unsigned long numDistinct)
   		{
-    			attributeInformation[attr] = numDistinct;
+    			attdistinctCount[attr] = numDistinct;
   		}
   
 		unsigned long NumTuples() 
 		{
-			return numberOfTuples;
+			return numtuples;
 		}
   		
 
   		friend ostream& operator<<(ostream& os, const Relation & RI)
     		{
       			map<string, unsigned long>::const_iterator it;
-      			//os << RI.attributeInformation.size() << endl;
-      			for (it = RI.attributeInformation.begin(); it != RI.attributeInformation.end(); it++ )
+      			//os << RI.attdistinctCount.size() << endl;
+      			for (it = RI.attdistinctCount.begin(); it != RI.attdistinctCount.end(); it++ )
         		{
           			//os << (*it).first << endl << (*it).second << endl;
         		}
@@ -67,7 +67,7 @@ class Relation
     		{
       			unsigned long numTups;
       			is >> numTups;
-      			RI.numberOfTuples = numTups;
+      			RI.numtuples = numTups;
       			unsigned long numMappings;
       			is >> numMappings;
       			for (unsigned i = 0; i < numMappings; i++)
@@ -76,7 +76,7 @@ class Relation
           			unsigned long distinct;
           			is >> attr;
           			is >> distinct;
-          			RI.attributeInformation[attr] = distinct;
+          			RI.attdistinctCount[attr] = distinct;
         		}
       			return is;
     		}
