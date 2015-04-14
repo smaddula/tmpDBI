@@ -2,9 +2,7 @@
 #define STATISTICS_
 #include "ParseTree.h"
 #include <map>
-#include <tr1/unordered_map>
 #include <set>
-#include <tr1/unordered_set>
 #include <string>
 #include <utility>
 #include <vector>

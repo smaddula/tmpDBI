@@ -1,12 +1,10 @@
 #include "Statistics.h"
-#include <cassert>
 #include <string>
 #include <iostream>
 #include <cstdlib>
 #include <vector>
 #include <set>
-#include <tr1/unordered_set>
-#include <algorithm>
+//#include <algorithm>
 #include <fstream>
 
 using namespace std;
@@ -262,10 +260,8 @@ vector<string> Statistics :: CheckParseTree(struct AndList *pAnd)
                   {
                     // check left operand
                     string attr(pOperand->value);
-                    if (0 == relationAttrsMap.count(attr))
+                    if (relationAttrsMap.count(attr)==0)
                       {
-                        cerr << "left operand attribute \"" << attr << "\" not found" << endl;
-                        assert(0 != relationAttrsMap.count(attr));
                         exit(-1);
                       }
                     attrs.push_back(attr);
@@ -277,10 +273,8 @@ vector<string> Statistics :: CheckParseTree(struct AndList *pAnd)
                   {
                     // check right operand
                     string attr(pOperand->value);
-                    if (0 == relationAttrsMap.count(attr))
+                    if (relationAttrsMap.count(attr)==0)
                       {
-                        cerr << "right operand attribute \"" << attr << "\" not found" << endl;
-                        assert(0 != relationAttrsMap.count(attr));
                         exit(-1);
                       }
                     attrs.push_back(attr);
@@ -377,8 +371,6 @@ double Statistics :: CalculateEstimate(AndList *pAnd)
                           {opnd = lOperand; constant = rOperand; }
                         else if (NAME == rOperand->code)
                           {opnd = rOperand; constant = lOperand;}
-                        assert(0 != opnd); // something was assigned
-                        assert(0 != constant); // something was assigned
 
                         string const attr(opnd->value);
                         string const relation = relationAttrsMap[attr];
@@ -423,8 +415,6 @@ double Statistics :: CalculateEstimate(AndList *pAnd)
                     {opnd = lOperand; constant = rOperand; }
                   else if (NAME == rOperand->code)
                     {opnd = rOperand; constant = lOperand;}
-                  assert(0 != opnd); // something was assigned
-                  assert(0 != constant); // something was assigned
 
                   string const attr(opnd->value);
                   string const relation = relationAttrsMap[attr];
@@ -463,8 +453,6 @@ double Statistics :: CalculateEstimate(AndList *pAnd)
                     string attr(pOperand->value);
                     if (0 == relationAttrsMap.count(attr))
                       {
-                        cerr << "estimate left operand attribute \"" << attr << "\" not found" << endl;
-                        assert(0 != relationAttrsMap.count(attr));
                         exit(-1);
                       }
                   }
@@ -478,8 +466,6 @@ double Statistics :: CalculateEstimate(AndList *pAnd)
                     string attr(pOperand->value);
                     if (0 == relationAttrsMap.count(attr))
                       {
-                        cerr << "estimate right operand attribute \"" << attr << "\" not found" << endl;
-                        assert(0 != relationAttrsMap.count(attr));
                         exit(-1);
                       }
                   }
@@ -584,8 +570,6 @@ bool Statistics :: HasJoin(AndList *pAnd)
                           {opnd = lOperand; constant = rOperand; }
                         else if (NAME == rOperand->code)
                           {opnd = rOperand; constant = lOperand;}
-                        assert(0 != opnd); // something was assigned
-                        assert(0 != constant); // something was assigned
 
                         string const attr(opnd->value);
                         string const relation = relationAttrsMap[attr];
@@ -629,8 +613,6 @@ bool Statistics :: HasJoin(AndList *pAnd)
                     {opnd = lOperand; constant = rOperand; }
                   else if (NAME == rOperand->code)
                     {opnd = rOperand; constant = lOperand;}
-                  assert(0 != opnd); // something was assigned
-                  assert(0 != constant); // something was assigned
 
                   string const attr(opnd->value);
                   string const relation = relationAttrsMap[attr];
@@ -638,13 +620,11 @@ bool Statistics :: HasJoin(AndList *pAnd)
                   if(independentORs) // independent ORs
                     {
                       double const calculation = 1.0l - (1.0l)/(3.0l);;
-                      //clog << "indep, value is " << calculation << endl;
                       tempOrValue *= calculation;
                     }
                   else // dependent ORs
                     {
                       double const calculation = (1.0l)/(3.0l);
-                      //clog << "dep, value is " << calculation << endl;
                       tempOrValue += calculation;
                     }
                   break;
@@ -667,10 +647,8 @@ bool Statistics :: HasJoin(AndList *pAnd)
                   {
                     // check left operand
                     string attr(pOperand->value);
-                    if (0 == relationAttrsMap.count(attr))
+                    if (relationAttrsMap.count(attr)==0)
                       {
-                        cerr << "operand attribute \"" << attr << "\" not found" << endl;
-                        assert(0 != relationAttrsMap.count(attr));
                         exit(-1);
                       }
                   }
@@ -681,10 +659,8 @@ bool Statistics :: HasJoin(AndList *pAnd)
                   {
                     // check right operand
                     string attr(pOperand->value);
-                    if (0 == relationAttrsMap.count(attr))
+                    if (relationAttrsMap.count(attr)==0)
                       {
-                        cerr << "operand attribute \"" << attr << "\" not found" << endl;
-                        assert(relationAttrsMap.count(attr)!=0);
                         exit(-1);
                       }
                   }
