@@ -24,10 +24,9 @@ Statistics::~Statistics()
 void Statistics::AddRel(char *relName, int numTuples)
 {
   string s(relName);
-  const RelationInformation newRelation (numTuples, s);
+  const Relation newRelation (numTuples, s);
   rels[s] = newRelation;
   rels.insert( make_pair(s,newRelation));
-  rels[s].print();
 
 }
 void Statistics::AddAtt(char *relName, char *attName, int numDistincts)
@@ -50,11 +49,11 @@ void Statistics::CopyRel(char *oldName, char *newName)
 {
   string oldN(oldName);
   string newN(newName);
-  map < std::string, tupleCount > const oldAttrs = rels[oldN].GetAtts();
+  map < std::string, unsigned long > const oldAttrs = rels[oldN].GetAtts();
 
-  RelationInformation newR(rels[oldN].NumTuples(), oldN);
+  Relation newR(rels[oldN].NumTuples(), oldN);
 
-  map < std::string, tupleCount >::const_iterator it;
+  map < std::string, unsigned long >::const_iterator it;
   for (it = oldAttrs.begin(); it != oldAttrs.end(); it++ )
     {
       string newAttrName(newN+"."+(*it).first); // might need to do this for the schma variables as well.
@@ -64,7 +63,6 @@ void Statistics::CopyRel(char *oldName, char *newName)
     }
 
   rels[newN] = newR; // put new relation in
-  newR.print();
 }
 
 void Statistics::Read(char *fromWhere)
@@ -82,7 +80,7 @@ void Statistics::Read(char *fromWhere)
   for(unsigned i = 0; i < iters; i++)
     {
       string relation;
-      RelationInformation RI;
+      Relation RI;
       statFile >> relation;
       statFile >> RI;
       rels[relation] = RI;
@@ -111,7 +109,7 @@ void Statistics::Write(char *fromWhere)
 
   statFile << rels.size() << endl;
   {
-    map < std::string, RelationInformation >::iterator it;
+    map < std::string, Relation >::iterator it;
     for (it = rels.begin(); it != rels.end(); it++ )
       {
         statFile << (*it).first << endl << (*it).second << endl;
@@ -167,14 +165,12 @@ void  Statistics::Apply(struct AndList *parseTree, char *relNames[], int numToJo
         }
       //clog << "new relation is " << newRelation << endl;
       // new map, to have both relations merged into it.
-      RelationInformation merged(estimate,newRelation); // new relation with estimated
+      Relation merged(estimate,newRelation); // new relation with estimated
 
       for (int i = 0; i < numToJoin ; i++)
         {
           merged.CopyAtts(rels[relNames[i]]);
         }
-      //clog << "printing merged relations " << endl << endl;
-      merged.print();
       rels[newRelation] = merged;
 
       { // get rid of information about old relations
@@ -198,9 +194,9 @@ void  Statistics::Apply(struct AndList *parseTree, char *relNames[], int numToJo
         }
       }
 
-      map<std::string, tupleCount> mergedAtts = merged.GetAtts();
+      map<std::string, unsigned long> mergedAtts = merged.GetAtts();
 
-      map < std::string, tupleCount>::const_iterator it;
+      map < std::string, unsigned long>::const_iterator it;
       for (it = mergedAtts.begin(); it != mergedAtts.end(); it++ )
         {
           extantAttrs[(*it).first] = newRelation;
@@ -375,13 +371,13 @@ double Statistics :: CalculateEstimate(AndList *pAnd)
                         // look up which relation l attr is in
                         string const lrel = extantAttrs[lattr];
                         // get size of l relation
-                        tupleCount const lRelSize = rels[lrel].NumTuples();
+                        unsigned long const lRelSize = rels[lrel].NumTuples();
                         // get number of Distinct values of L attr
                         int const lDistinct = rels[lrel].GetDistinct(lattr);
                         // look up which relation r attr is in
                         string const rrel = extantAttrs[rattr];
                         // get size of r relation
-                        tupleCount const rRelSize = rels[rrel].NumTuples();
+                        unsigned long const rRelSize = rels[rrel].NumTuples();
                         // get number of Distinct values of R attr
                         int const rDistinct = rels[rrel].GetDistinct(rattr);
 
@@ -414,7 +410,7 @@ double Statistics :: CalculateEstimate(AndList *pAnd)
 
                         string const attr(opnd->value);
                         string const relation = extantAttrs[attr];
-                        tupleCount const distinct = rels[relation].GetDistinct(attr);
+                        unsigned long const distinct = rels[relation].GetDistinct(attr);
                         //clog << "singleOr is " << singleOR << endl;
                         if (singleOR)
                           {
@@ -487,7 +483,7 @@ double Statistics :: CalculateEstimate(AndList *pAnd)
                     {opnd = rOperand;}
                   string const attr(opnd->value);
                   string const relation = extantAttrs[attr];
-                  tupleCount const relationSize = rels[relation].NumTuples();
+                  unsigned long const relationSize = rels[relation].NumTuples();
                   selectOnlySize = relationSize;
                 }
               {
@@ -621,13 +617,13 @@ bool Statistics :: HasJoin(AndList *pAnd)
                         // look up which relation l attr is in
                         string const lrel = extantAttrs[lattr];
                         // get size of l relation
-                        tupleCount const lRelSize = rels[lrel].NumTuples();
+                        unsigned long const lRelSize = rels[lrel].NumTuples();
                         // get number of Distinct values of L attr
                         int const lDistinct = rels[lrel].GetDistinct(lattr);
                         // look up which relation r attr is in
                         string const rrel = extantAttrs[rattr];
                         // get size of r relation
-                        tupleCount const rRelSize = rels[rrel].NumTuples();
+                        unsigned long const rRelSize = rels[rrel].NumTuples();
                         // get number of Distinct values of R attr
                         int const rDistinct = rels[rrel].GetDistinct(rattr);
 
@@ -660,7 +656,7 @@ bool Statistics :: HasJoin(AndList *pAnd)
 
                         string const attr(opnd->value);
                         string const relation = extantAttrs[attr];
-                        tupleCount const distinct = rels[relation].GetDistinct(attr);
+                        unsigned long const distinct = rels[relation].GetDistinct(attr);
                         //clog << "singleOr is " << singleOR << endl;
                         if (singleOR)
                           {
@@ -733,7 +729,7 @@ bool Statistics :: HasJoin(AndList *pAnd)
                     {opnd = rOperand;}
                   string const attr(opnd->value);
                   string const relation = extantAttrs[attr];
-                  tupleCount const relationSize = rels[relation].NumTuples();
+                  unsigned long const relationSize = rels[relation].NumTuples();
                   selectOnlySize = relationSize;
                 }
               {

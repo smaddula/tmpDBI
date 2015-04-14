@@ -9,62 +9,54 @@
 #include <utility>
 #include <vector>
 #include <iostream>
-
-class RelationInformation
+using namespace std;
+class Relation
 {
-	typedef unsigned long long tupleCount;
-	tupleCount numberOfTuples;
-	std::map<std::string, tupleCount> attributeInformation;
-	// Schema sch;
-	std::string originalName;
+	unsigned long numberOfTuples;
+	map<std::string, unsigned long> attributeInformation;
+	string originalName;
  
 	public:
 
-		RelationInformation () : numberOfTuples(0), attributeInformation(), originalName() {}
-
-  		explicit RelationInformation (tupleCount tuples, std::string origNme) : numberOfTuples(tuples), attributeInformation(), /* sch(), */ originalName(origNme)
-  		{/* char * cat = "catalog"; sch = Schema(cat, origNme.c_str()); */
+		Relation ()  {
+			numberOfTuples = 0;
 		}
 
-  		std::map<std::string, tupleCount> const GetAtts()
+  		explicit Relation (unsigned long tuples, string origNme)
+  		{
+			numberOfTuples = tuples;
+			originalName = origNme;
+		}
+
+  		map<std::string, unsigned long> const GetAtts()
     		{
       			return attributeInformation;
     		}
   		
-		void CopyAtts (RelationInformation const & otherRel)
+		void CopyAtts (Relation const & otherRel)
 		{
     			attributeInformation.insert(otherRel.attributeInformation.begin(), otherRel.attributeInformation.end());
   		}
   		
-		tupleCount GetDistinct (std::string attr)
+		unsigned long GetDistinct (string attr)
   		{
     			return attributeInformation[attr];
   		}
   
-		void AddAtt (std::string attr, tupleCount numDistinct)
+		void AddAtt (string attr, unsigned long numDistinct)
   		{
     			attributeInformation[attr] = numDistinct;
   		}
   
-		tupleCount NumTuples() 
+		unsigned long NumTuples() 
 		{
 			return numberOfTuples;
 		}
   		
-		void print()
-  		{
-    			//std::clog << numberOfTuples << std::endl;
-    			for (std::map<std::string, tupleCount>::iterator it=attributeInformation.begin() ; it != attributeInformation.end(); it++ )
-      			{
-				//std::clog << (*it).first << " => " << (*it).second << std::endl;
-			}
-  		}
 
-  		friend std::ostream& operator<<(std::ostream& os, const RelationInformation & RI)
+  		friend ostream& operator<<(std::ostream& os, const Relation & RI)
     		{
-      			using std::endl;
-      			//os << RI.numberOfTuples << endl;
-      			std::map<std::string, tupleCount>::const_iterator it;
+      			map<std::string, unsigned long>::const_iterator it;
       			//os << RI.attributeInformation.size() << endl;
       			for (it = RI.attributeInformation.begin(); it != RI.attributeInformation.end(); it++ )
         		{
@@ -73,21 +65,17 @@ class RelationInformation
       			return os;
     		}
 
-  		friend std::istream& operator>>(std::istream& is, RelationInformation & RI)
+  		friend istream& operator>>(std::istream& is, Relation & RI)
     		{
-      			using std::clog; using std::endl;
-      			//clog << "reading relation" << endl;
-      			tupleCount numTups;
+      			unsigned long numTups;
       			is >> numTups;
-      			//clog << "there are " << numTups << " tuples in this relation." << endl;
       			RI.numberOfTuples = numTups;
-      			tupleCount numMappings;
+      			unsigned long numMappings;
       			is >> numMappings;
-      			//clog << "there are " << numMappings << " attributes in this relation." << endl;
       			for (unsigned i = 0; i < numMappings; i++)
         		{
-          			std::string attr;
-          			tupleCount distinct;
+          			string attr;
+          			unsigned long distinct;
           			is >> attr;
           			is >> distinct;
           			RI.attributeInformation[attr] = distinct;
@@ -99,15 +87,13 @@ class RelationInformation
 class Statistics
 {
 	private:
-  		typedef long long unsigned int tupleCount;
 
-  		std::map < std::string, RelationInformation > rels;
-  		std::map < std::string, std::string> extantAttrs; // if the attr exists, and what relation it is in. <k,v> is <attr, relation-attr-is-in>
-  		std::map < std::string, std::string> mergedRelations; // <k,v> is <original-relation-name, merged-relation-name>
-
+  		map < std::string, Relation > rels;
+  		map < std::string, std::string> extantAttrs; 
+  		map < std::string, std::string> mergedRelations;
   		void Check (struct AndList *parseTree, char *relNames[], int numToJoin);
   		void CheckRelations(char *relNames[], int numToJoin);
-  		std::vector<std::string> CheckParseTree(struct AndList *pAnd);
+  		vector<std::string> CheckParseTree(struct AndList *pAnd);
   		double CalculateEstimate(struct AndList *pAnd);
   		bool HasJoin(AndList *pAnd);
  	public:
@@ -126,53 +112,15 @@ class Statistics
   		void  Apply(struct AndList *parseTree, char *relNames[], int numToJoin);
   		double Estimate(struct AndList *parseTree, char **relNames, int numToJoin);
 
-  		std::string getAttrHomeTable(std::string a)
+  		string getAttrHomeTable(std::string a)
     		{
-      			//using std::clog;
-      			//using std::endl;
-      			using std::string;
-      			//clog << "called get attr home table" << endl;
-      			// std::string a(attr);
-      			//clog << a << a.size() << endl;
-      			//clog << "found " << extantAttrs.count(a);
       			if (1 == extantAttrs.count(a))
       	  		{
-          			//clog << "WTF" << endl;
-          			//clog << extantAttrs[a] << endl;
           			string tbl(extantAttrs[a]);
-          			//clog << tbl << endl;
           			return tbl;
         		}
       			return "";
     		}
-
-  		/*void print()
-  		{
-    			using std::clog; using std::endl;
-    			{
-      				std::map < std::string, RelationInformation >::iterator it;
-      				for (it = rels.begin(); it != rels.end(); it++ )
-        			{
-          				//clog << (*it).first << " relation has information " << endl << (*it).second << endl;
-        			}
-    			}
-    			{
-      				std::map < std::string, std::string>::iterator it;
-      				for (it = extantAttrs.begin(); it != extantAttrs.end(); it++ )
-        			{
-          				//clog << (*it).first << " is in relation " << (*it).second << endl;
-        			}
-    			}
-    			{ // merged relations
-      				//clog << "Merged relations are " << endl;
-      				std::map < std::string, std::string>::iterator it;
-      				for (it = mergedRelations.begin(); it != mergedRelations.end(); it++ )
-        			{
-          				//clog << (*it).first << " is in relation " << (*it).second << endl;
-
-        			}
-    			}
-  		}*/
 };
 
 #endif
